@@ -18,7 +18,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'amnamara$muk_support_portal',
         'USER': 'amnamara',
-        'PASSWORD': 'Israel@2024!',  # Use environment variable in production
+        'PASSWORD': 'Root@123',  # Use environment variable in production
         'HOST': 'amnamara.mysql.pythonanywhere-services.com',
         'PORT': '',
         'OPTIONS': {
