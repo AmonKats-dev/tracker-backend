@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +22,20 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^=b6+h30*u#5huf7^=p*^4wu9!+g^dk#d%si-)4@63e4kwe0hr'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-^=b6+h30*u#5huf7^=p*^4wu9!+g^dk#d%si-)4@63e4kwe0hr')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+# Check if running on PythonAnywhere
+ON_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
+PA_USERNAME = os.getenv('PA_USERNAME', 'amnamara')
+
+# Update allowed hosts to include PythonAnywhere domain
+if ON_PYTHONANYWHERE:
+    ALLOWED_HOSTS = [f'{PA_USERNAME}.pythonanywhere.com']
+else:
+    ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -85,21 +94,45 @@ WSGI_APPLICATION = 'muk_support_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'muk_support_portal',
-        'USER': 'root',
-        'PASSWORD': 'tool',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'",
-            'charset': 'utf8',
-            'use_unicode': True,
+# Check if running on PythonAnywhere
+ON_PYTHONANYWHERE = 'PYTHONANYWHERE_DOMAIN' in os.environ
+
+if ON_PYTHONANYWHERE:
+    # Get the username from environment or use a default value
+    PA_USERNAME = os.getenv('PA_USERNAME', 'amnamara')
+    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': f'{PA_USERNAME}$muk_support_portal',
+            'USER': PA_USERNAME,
+            'PASSWORD': os.getenv('PA_DB_PASSWORD', 'Root@123'),
+            'HOST': f'{PA_USERNAME}.mysql.pythonanywhere-services.com',
+            'PORT': '3306',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'",
+                'charset': 'utf8',
+                'use_unicode': True,
+            }
         }
     }
-}
+else:
+    # Local development database
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'muk_support_portal',
+            'USER': 'root',
+            'PASSWORD': 'tool',
+            'HOST': 'localhost',
+            'PORT': '3306',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'",
+                'charset': 'utf8',
+                'use_unicode': True,
+            }
+        }
+    }
 
 
 # Password validation
@@ -137,6 +170,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -180,6 +214,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",  # Vite default port
 ]
+
+# Add PythonAnywhere domain to CORS if running there
+if ON_PYTHONANYWHERE:
+    # If you have a frontend on PythonAnywhere or elsewhere
+    frontend_domain = os.getenv('FRONTEND_DOMAIN')
+    if frontend_domain:
+        CORS_ALLOWED_ORIGINS.append(frontend_domain)
 
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
